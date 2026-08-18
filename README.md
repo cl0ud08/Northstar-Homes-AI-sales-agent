@@ -32,7 +32,7 @@ Open `http://127.0.0.1:8000`.
 
 ### Live demo
 
-**<add your Render URL here>**
+**https://northstar-agent-r5oq.onrender.com/**
 
 Hosted on Render's free tier, which spins down after inactivity — the first request after
 an idle period takes 30–60 seconds to wake. Subsequent requests are normal speed.
