@@ -571,7 +571,7 @@ function renderRecord(a) {
       <dl>
         ${pillRow("Status", a.site_visit_status, visitTone)}
         ${row("Slot", a.site_visit_datetime)}
-        ${boolPill("Booking failed", a.booking_failed, "alert")}
+        ${boolPill("Had a failed attempt", a.booking_failed, "alert")}
       </dl>
     </div>
 
