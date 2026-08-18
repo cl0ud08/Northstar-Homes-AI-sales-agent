@@ -1,0 +1,5 @@
+﻿fastapi>=0.118
+uvicorn[standard]>=0.37
+openai>=1.109
+pydantic>=2.12
+python-dotenv>=1.1
