@@ -24,6 +24,10 @@ def get_client() -> OpenAI:
         _client = OpenAI(
             api_key=settings.llm_api_key,
             base_url=settings.llm_base_url,
+            # Without an explicit timeout the SDK waits indefinitely, which
+            # surfaces to the user as a permanently stuck "typing" indicator.
+            timeout=settings.request_timeout,
+            max_retries=2,
         )
     return _client
 
