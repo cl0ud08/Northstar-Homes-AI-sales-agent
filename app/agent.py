@@ -6,7 +6,7 @@ from typing import Optional
 
 from openai import OpenAI
 
-from .booking import BOOKING_TOOL, book_site_visit
+from .booking import BOOKING_TOOL, book_site_visit, normalise_slot
 from .config import load_system_prompt, settings
 from .schemas import BookingEvent
 from .store import Session
@@ -138,6 +138,28 @@ def run_turn(
                 args = json.loads(tool_call.function.arguments or "{}")
             except json.JSONDecodeError:
                 args = {}
+
+            # Guard against re-booking a slot this session already confirmed.
+            # The model sometimes re-fires the tool when the customer replies
+            # after a successful booking (e.g. giving their name), which then
+            # collides with the booking it just made. Compared on the
+            # normalised slot key, because the model rarely phrases the same
+            # slot identically twice ("2 pm" vs "2:00 pm" vs "this Sunday").
+            requested_key = normalise_slot(
+                args.get("date_text", ""), args.get("time_text", "")
+            )
+            already = next(
+                (
+                    b
+                    for b in session.bookings
+                    if b.status == "CONFIRMED"
+                    and normalise_slot(b.requested_slot, "") == requested_key
+                ),
+                None,
+            )
+            if already is not None:
+                booking_event = already
+                continue
 
             booking_event = book_site_visit(
                 date_text=args.get("date_text", ""),

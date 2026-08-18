@@ -40,7 +40,7 @@ _WEEKDAYS = [
 ]
 
 
-def _normalise(date_text: str, time_text: str) -> str:
+def normalise_slot(date_text: str, time_text: str) -> str:
     """Reduce loose natural-language slot text to '<weekday> <hh:mm>'.
 
     The model passes whatever the customer said ("this Sunday", "11 am"), so
@@ -85,7 +85,7 @@ def book_site_visit(
             requested_slot=requested,
         )
 
-    slot_key = _normalise(date_text, time_text)
+    slot_key = normalise_slot(date_text, time_text)
 
     if slot_key in PRE_BOOKED:
         return BookingEvent(
