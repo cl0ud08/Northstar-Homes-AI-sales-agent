@@ -33,6 +33,10 @@ class Settings:
     analytics_temperature: float = 0.0
 
     max_history_messages: int = int(os.getenv("MAX_HISTORY_MESSAGES", "40"))
+    
+    # Seconds before a provider call is abandoned. Kept generous enough for a
+    # slow first token, short enough that a hung call fails visibly.
+    request_timeout: float = float(os.getenv("REQUEST_TIMEOUT", "30"))
 
 
 settings = Settings()
