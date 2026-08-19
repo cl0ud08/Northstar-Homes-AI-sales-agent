@@ -87,7 +87,7 @@ Browser  ──POST /api/chat──►  FastAPI
 | `app/schemas.py` | Pydantic models, including the lead record |
 | `app/store.py` | In-memory session store |
 | `docs/behaviour-spec.md` | Ten reference conversations, written before the prompt |
-| `docs/test-protocol.md` | 30-test behaviour protocol |
+| `docs/test-protocol.md` | Live-run test protocol: real input/output pairs against the running server |
 | `render.yaml` | Deployment blueprint |
 
 ### Booking simulation
@@ -188,12 +188,17 @@ Each of these passed a read-through of the prompt and failed in practice.
 | Invented available slots while the booking system was down | Split the three tool statuses explicitly; `SYSTEM_ERROR` must offer no times |
 | Gemini 3.x rejected the second call with a `thought_signature` error | Stopped replaying tool-call messages; booking results are injected as context instead |
 | Scheduled a follow-up for a customer who asked to be removed | Enforced in code, not prompt guidance |
+| Misstated the 3 BHK price in Hinglish — "ek crore **sattar** lakh" (₹1.70 cr) instead of "pachhattar lakh" (₹1.75 cr), reproduced live | Pinned the exact spoken form of both prices in English, Hinglish, and Devanagari in the prompt so the model copies the phrase instead of converting crore/lakh to words on the fly |
+| `LLM_MODEL` defaulted to a retired Gemini model (`gemini-2.0-flash`), a live 404 | Updated the default to `gemini-3.6-flash` in `app/config.py` and `.env.example` |
 
-The last three are the interesting ones. The invented-slots defect is a plausible-sounding
-reply that would damage a real customer relationship. The `thought_signature` error is
-provider-specific protocol leakage that the fix removes entirely, making history portable
-across providers. And the follow-up defect is a case where a prompt rule was not enough —
-some invariants belong in code.
+The invented-slots defect is a plausible-sounding reply that would damage a real customer
+relationship. The `thought_signature` error is provider-specific protocol leakage that the fix
+removes entirely, making history portable across providers. The follow-up defect is a case
+where a prompt rule was not enough — some invariants belong in code. And the Hinglish price
+defect is a reminder that "say the number in words" is itself a small arithmetic task the model
+can get wrong — pinning the exact phrase removes the arithmetic rather than trusting the model
+to do it correctly every time. Full evidence for all of these, including the live repro, is in
+`docs/test-protocol.md`.
 
 ---
 

@@ -23,7 +23,7 @@ class Settings:
         "LLM_BASE_URL",
         "https://generativelanguage.googleapis.com/v1beta/openai/",
     )
-    llm_model: str = os.getenv("LLM_MODEL", "gemini-2.0-flash")
+    llm_model: str = os.getenv("LLM_MODEL", "gemini-3.6-flash")
 
     # Reply temperature. Kept low-ish: this agent must stay on script around
     # prices and refusals, but flat 0.0 makes it repeat refusal wording verbatim.
