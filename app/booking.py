@@ -22,11 +22,14 @@ PRE_BOOKED: set[str] = {
     "saturday 16:00",
 }
 
-# Offered when a requested slot clashes.
-FALLBACK_SLOTS: list[str] = [
-    "Sunday at two in the afternoon",
-    "Saturday at eleven in the morning",
-    "Monday at five in the evening",
+# Offered when a requested slot clashes. Each entry carries its normalised
+# key alongside the spoken text so it can be filtered out if it happens to
+# match the slot that was just rejected (or another taken slot) — otherwise
+# the same unavailable time can get handed back as its own "alternative".
+FALLBACK_SLOTS: list[tuple[str, str]] = [
+    ("sunday 14:00", "Sunday at two in the afternoon"),
+    ("saturday 11:00", "Saturday at eleven in the morning"),
+    ("monday 17:00", "Monday at five in the evening"),
 ]
 
 _WEEKDAYS = [
@@ -88,13 +91,23 @@ def book_site_visit(
     slot_key = normalise_slot(date_text, time_text)
 
     if slot_key in PRE_BOOKED:
+        alternatives = [
+            text
+            for key, text in FALLBACK_SLOTS
+            if key != slot_key and key not in PRE_BOOKED
+        ][:2]
         return BookingEvent(
             status="SLOT_UNAVAILABLE",
             requested_slot=requested,
-            alternatives=FALLBACK_SLOTS[:2],
+            alternatives=alternatives,
         )
 
-    PRE_BOOKED.add(slot_key)
+    # Note: deliberately not added to PRE_BOOKED. That set is the fixed demo
+    # fixture for triggering the clash path (see module docstring) — it must
+    # stay a fixed seed, not accumulate real confirmations, or a booking
+    # confirmed in one conversation would silently block every other
+    # customer (and every future session, since this is process-global
+    # state) from ever booking that same time again.
     return BookingEvent(
         status="CONFIRMED",
         requested_slot=requested,
