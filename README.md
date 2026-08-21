@@ -130,7 +130,10 @@ up on.
 Hinglish in, roman-script Hinglish out. Replying in Devanagari to someone typing `mujhe 3 BHK
 chahiye` is jarring, and the distinction is easy to miss if you only think in terms of
 language. Naturally-English terms — BHK, site visit, sector numbers — stay in English even in
-Hindi replies, because that is how these conversations actually sound in Gurugram.
+Hindi replies, because that is how these conversations actually sound in Gurugram. The one
+deliberate exception is the stop-request sentence (Section 8): its wording is pinned in English
+regardless of input language, since a removal confirmation is the one line where exact,
+unambiguous wording matters more than script-matching — see test C5.
 
 **Unknown facts are enumerated, not gestured at.** A generic "don't make things up" produces a
 model that complies in spirit and then confidently estimates a possession date. Section 2 names
@@ -165,7 +168,7 @@ Full protocol in `docs/test-protocol.md`. Selected results:
 | C1 | `1.75 crore is too expensive` | Redirects to the config it knows about | "I understand the 3 BHK at one crore seventy-five lakh may be above your target. We also have a 2 BHK starting at one crore thirty-five lakh. What budget range were you considering?" |
 | C2 | `I'm in a meeting right now` | Stops selling, offers to return later | "Sure, I understand. When would be a convenient time for me to follow up with you?" |
 | C4 | `don't contact me again, remove my number` | One sentence, no question | "Understood, I've marked your number for removal and you won't hear from us again. Apologies for the disturbance." |
-| C5 | `mujhe koi call mat karna, number hata do` | Same hard stop in Hinglish | "Understood, I've marked your number for removal and you won't hear from us again. Apologies for the disturbance." |
+| C5 | `mujhe koi call mat karna, number hata do` | Hinglish input, same hard-stop wording (pinned in English by design — see Section 8) | "Understood, I've marked your number for removal and you won't hear from us again. Apologies for the disturbance." |
 | C6 | `I don't want to talk to a bot, get me a real person` | Agrees without resistance | "I understand you'd like to speak with a real person. Our sales team can call you directly. May I have your name and phone number so we can arrange that?" |
 | D2 | `book me a site visit for Sunday 11 am` | Clash detected, tool's alternatives only | Chip: `slot unavailable`. "I'm sorry, Sunday at eleven is already taken. I can offer Sunday at two in the afternoon or Saturday at eleven in the morning. Which option works for you?" |
 | D3 | Booking with outage forced | No invented slots, captures the lead | Chip: `booking system error`. "I'm unable to confirm the Saturday 4 pm slot at the moment, but I can have our team lock it in for you. Could you share your name and phone number, please?" |
@@ -236,6 +239,14 @@ to do it correctly every time. Full evidence for all of these, including the liv
 - **No voice path implemented.** The prompt is written for it and the constraints are enforced,
   but there is no STT or TTS wired up. Groq exposes Whisper on the same key, so the path is one
   endpoint away rather than a rewrite.
+- **Hinglish-in-Roman-script is unverified against a real TTS voice.** Local smoke test (Windows
+  SAPI `en-US`, no Hindi phoneme model) reads the pinned Hinglish price phrases (`crore`,
+  `pachhattar lakh`) badly — see `docs/test-protocol.md` Defects. Expected: an English-only voice
+  has no Hindi pronunciation model, so this is a TTS-vendor requirement (needs Hindi-aware
+  synthesis, e.g. Sarvam / Google `hi-IN` / Azure Indic voices), not a prompt defect — B2 already
+  passes for chat, where the same Roman-script text is correct. The fix belongs at the voice-channel
+  boundary (a transliteration step next to `sanitise_for_voice()`, applied only on the audio path),
+  never in the shared prompt, so the working chat behaviour isn't broken to fix voice.
 - **Language detection is the model's job.** No separate classifier. It has held across every
   test but would be worth hardening for production.
 - **The output sanitiser is a safety net, not a fix.** It strips markdown the model shouldn't
